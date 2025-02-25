@@ -9,6 +9,8 @@ from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
 from python_tools.fastmodules import survey_cuts_logical
 
+start_overtime = time.time()
+
 # ==== Read in settings ==== #
 parser = argparse.ArgumentParser(description='options')
 parser.add_argument('-p', '--par', dest='par', default="", help='path to parameter file')
@@ -183,3 +185,6 @@ if parms.run_zobov:
     end = time.time()
     print("ZOBOV took %0.3f seconds" % (end - start))
 # ============================== #
+
+end_overtime = time.time()
+print("\nRevolver took %0.3f seconds in total" % (end_overtime - start_overtime))
