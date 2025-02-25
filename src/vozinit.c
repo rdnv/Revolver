@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   int i, np, np_current, np_tot = 0;
   realT **rfloat = NULL, rtemp[3];
   FILE *pos, *scr;
-  char *posfile, scrfile[FNL], systemstr[FNL], *suffix;
+  char *posfile, scrfile[FNL], systemstr[FNL], *suffix, *rundir;
   realT xmin,xmax,ymin,ymax,zmin,zmax;
   
   int isitinbuf;
@@ -24,13 +24,14 @@ int main(int argc, char *argv[]) {
   realT c[3];
   int b[3];
 
-  if (argc != 6) {
+  if (argc != 7) {
     printf("Wrong number of arguments.\n");
     printf("arg1: position file\n");
     printf("arg2: buffer size (default 0.1)\n");
     printf("arg3: box size\n");
     printf("arg4: number of divisions (default 2)\n");
-    printf("arg5: suffix describing this run\n\n");
+    printf("arg5: suffix describing this run\n");
+    printf("arg6: voz directory\n\n");
     exit(0);
   }
   posfile = argv[1];
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
   }
 
   suffix = argv[5];
+  rundir = argv[6];
 
   /* Output script file */
   sprintf(scrfile,"scr%s",suffix);
@@ -69,12 +71,12 @@ int main(int argc, char *argv[]) {
   for (b[0]=0;b[0]<numdiv; b[0]++) {
    for (b[1] = 0; b[1] < numdiv; b[1]++) {
     for (b[2] = 0; b[2] < numdiv; b[2]++) {
-      fprintf(scr,"bin/voz1b1 %s %g %g %s %d %d %d %d\n",
-	     posfile,border,boxsize,suffix,numdiv,b[0],b[1],b[2]);
+      fprintf(scr,"%s/voz1b1 %s %g %g %s %d %d %d %d\n",
+        rundir,posfile,border,boxsize,suffix,numdiv,b[0],b[1],b[2]);
     }
    }
   }
-  fprintf(scr,"bin/voztie %d %s\n",numdiv,suffix);
+  fprintf(scr,"%s/voztie %d %s\n",rundir,numdiv,suffix);
   fclose(scr);
 
   sprintf(systemstr,"chmod u+x %s",scrfile);

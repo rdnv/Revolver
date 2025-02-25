@@ -14,15 +14,16 @@ parser = argparse.ArgumentParser(description='options')
 parser.add_argument('-p', '--par', dest='par', default="", help='path to parameter file')
 args = parser.parse_args()
 # read in default parameter values
+default_param_filename = os.path.dirname(__file__)+'/parameters/default_params.py'
 if sys.version_info.major <= 2:
     import imp
-    parms = imp.load_source("name", 'parameters/default_params.py')
+    parms = imp.load_source("name", default_param_filename)
 elif sys.version_info.major == 3 and sys.version_info.minor <= 4:
     from importlib.machinery import SourceFileLoader
-    parms = SourceFileLoader("name", 'parameters/default_params.py').load_module()
+    parms = SourceFileLoader("name", default_param_filename).load_module()
 else:
     import importlib.util
-    spec = importlib.util.spec_from_file_location("name",'parameters/default_params.py')
+    spec = importlib.util.spec_from_file_location("name", default_param_filename)
     parms = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(parms)
 

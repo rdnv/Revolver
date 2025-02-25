@@ -733,8 +733,8 @@ class ZobovVoids:
                 # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
                 logfile = logfolder + self.handle + '-vozinit.out'
                 log = open(logfile, "w")
-                cmd = ["./bin/vozinit", self.posn_file, str(self.zobov_buffer), str(self.box_length),
-                       str(self.zobov_box_div), self.handle]
+                cmd = [binpath + "vozinit", self.posn_file, str(self.zobov_buffer), str(self.box_length),
+                       str(self.zobov_box_div), self.handle, binpath]
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
 
