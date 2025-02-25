@@ -347,15 +347,16 @@ class VoxelVoids:
         header = '%d voxels, %d voids\n' % (nvox, len(output))
         if self.is_box:
             header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
         else:
             header += 'VoidID RA Dec z R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-        np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f', header=header)
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+        np.savetxt(catalogue_file, output, fmt=formatting, header=header)
 
         if self.use_barycentres:
             catalogue_file = self.output_folder + 'barycentres_' + self.void_prefix + '_cat.txt'
             output[:, 1:4] = barycentres
-            np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f',
-                       header=header)
+            np.savetxt(catalogue_file, output, fmt=formatting, header=header)
 
     def postprocess_clusters(self):
 
@@ -438,9 +439,11 @@ class VoxelVoids:
         header = '%d voxels, %d clusters\n' % (nvox, len(output))
         if self.is_box:
             header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
         else:
             header += 'ClusterID RA Dec z R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
-        np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f', header=header)
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+        np.savetxt(catalogue_file, output, fmt=formatting, header=header)
 
     def voxel_position(self, voxel):
 

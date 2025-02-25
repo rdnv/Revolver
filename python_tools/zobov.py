@@ -1296,13 +1296,13 @@ class ZobovVoids:
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
         if self.is_box:
-            header = header + 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-            np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f', header=header)
+            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
         else:
-            header = header + 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_min delta_avg lambda_v ' + \
-                     'DensRatio Theta_eff(deg) EdgeFlag'
-            np.savetxt(info_file, info_output, fmt='%d %0.6f %0.3f %0.3f %0.4f %0.3f %0.6f %0.6f %0.6f %0.6f %d',
-                       header=header)
+            header += 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_min delta_avg lambda_v ' + \
+                        'DensRatio Theta_eff(deg) EdgeFlag'
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f %0.6f %d'
+        np.savetxt(info_file, info_output, fmt=formatting, header=header)
 
         return edge_flag
 
@@ -1467,13 +1467,13 @@ class ZobovVoids:
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
         if self.is_box:
-            header = header + 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-            np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f', header=header)
+            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
         else:
-            header = header + 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_min delta_avg lambda_v' + \
+            header += 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_min delta_avg lambda_v' + \
                      'DensRatio Theta_eff(deg) EdgeFlag'
-            np.savetxt(info_file, info_output, fmt='%d %0.6f %0.3f %0.3f %0.4f %0.3f %0.6f %0.6f %0.6f %0.6f %d',
-                       header=header)
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f %0.6f %d'
+        np.savetxt(info_file, info_output, fmt=formatting, header=header)
 
     def postprocess_clusters(self):
         """
@@ -1738,11 +1738,10 @@ class ZobovVoids:
         # save output data to file
         header = "%d superclusters from %s\n" % (num_acc, self.handle)
         if self.is_box:
-            header = header + 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
-            np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %d %d',
-                       header=header)
+            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
         else:
-            header = header + 'ClusterID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_max delta_avg lambda_c ' + \
+            header += 'ClusterID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_max delta_avg lambda_c ' + \
                      'DensRatio Theta_eff(deg) EdgeFlag'
-            np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %d',
-                       header=header)
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f %0.6f %d'
+            np.savetxt(info_file, info_output, fmt=formatting, header=header)
