@@ -1121,8 +1121,6 @@ class ZobovVoids:
         edge_flag = self.find_void_circumcentres(num_acc, wtd_avg_dens, edge_flag)
 
         if self.use_barycentres:
-            if not os.access(self.output_folder + "barycentres/", os.F_OK):
-                os.makedirs(self.output_folder + "barycentres/")
             self.find_void_barycentres(num_acc, edge_flag, use_stripping, strip_density_threshold)
 
     def find_void_circumcentres(self, num_struct, wtd_avg_dens, edge_flag):
@@ -1328,7 +1326,7 @@ class ZobovVoids:
         zone_file = self.output_folder + 'rawZOBOV/' + self.handle + '.zone'
         hierarchy_file = self.output_folder + self.void_prefix + '.void'
         list_file = self.output_folder + self.void_prefix + '_list.txt'
-        info_file = self.output_folder + 'barycentres/' + self.void_prefix + '_baryC_cat.txt'
+        info_file = self.output_folder + 'barycentres_' + self.void_prefix + '_cat.txt'
 
         # load up the particle-zone info
         zonedata = np.loadtxt(zone_file, dtype='int', skiprows=1)

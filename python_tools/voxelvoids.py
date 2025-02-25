@@ -352,9 +352,7 @@ class VoxelVoids:
         np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f', header=header)
 
         if self.use_barycentres:
-            if not os.access(self.output_folder + "barycentres/", os.F_OK):
-                os.makedirs(self.output_folder + "barycentres/")
-            catalogue_file = self.output_folder + 'barycentres/' + self.void_prefix + '_baryC_cat.txt'
+            catalogue_file = self.output_folder + 'barycentres_' + self.void_prefix + '_cat.txt'
             output[:, 1:4] = barycentres
             np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f',
                        header=header)
