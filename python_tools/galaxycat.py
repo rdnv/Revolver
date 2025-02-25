@@ -76,8 +76,7 @@ class GalaxyCatalogue:
                 self.names = a.names
                 # assume all vetoes have already been applied (as for BOSS/eBOSS public catalogues)
                 self.veto = np.ones(self.size)  # all vetoes have already been applied!
-                # change the name 'z'-->'redshift' to avoid confusion
-                self.redshift = self.z.astype('float64')  # explicit float64 specification necessary for Cython use
+                self.redshift = self.redshift.astype('float64')  # explicit float64 specification necessary for Cython use
                 self.weights_model = parms.weights_model
                 # check if weights are provided; if not, initialize to defaults
                 if 'weight_cp' not in (name.casefold() for name in self.names):
