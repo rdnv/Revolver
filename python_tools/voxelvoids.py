@@ -208,11 +208,11 @@ class VoxelVoids:
 
         # write this to file for jozov-grid to read
         rhogflat = np.array(self.rhoflat, dtype=np.float32)
-        with open(raw_dir + 'density_n%d.dat' % self.nbins, 'w') as F:
+        with open(raw_dir + self.handle + "_density_n%d.dat" % self.nbins, 'w') as F:
             rhogflat.tofile(F, format='%f')
 
         # now call jozov-grid
-        cmd = [binpath + "jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins,
+        cmd = [binpath + "jozov-grid", "v", raw_dir + self.handle + "_density_n%d.dat" % self.nbins,
                raw_dir + self.handle, str(self.nbins)]
         subprocess.call(cmd)
 
@@ -223,7 +223,7 @@ class VoxelVoids:
         if self.find_clusters:
             print("\n ==== bonus: overdensity-finding with voxel-based method ==== ")
             sys.stdout.flush()
-            cmd = [binpath + "jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins,
+            cmd = [binpath + "jozov-grid", "c", raw_dir + self.handle + "_density_n%d.dat" % self.nbins,
                    raw_dir + self.handle, str(self.nbins)]
             subprocess.call(cmd)
             self.postprocess_clusters()
