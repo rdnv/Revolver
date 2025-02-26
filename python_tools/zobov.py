@@ -22,6 +22,8 @@ class ZobovVoids:
         sys.stdout.flush()
 
         self.verbose = parms.verbose
+        self.outlight = parms.outlight
+        self.cleanup = parms.cleanup
 
         # the prefix/handle used for all output file names
         self.handle = parms.handle
@@ -104,7 +106,7 @@ class ZobovVoids:
                 self.mask_file = self.output_folder + self.handle + '_mask.fits'
                 self.f_sky = self.generate_mask()
             else:
-                mask = hp.read_map(parms.mask_file, verbose=False)
+                mask = hp.read_map(parms.mask_file)
                 self.mask_file = parms.mask_file
                 # check whether the mask is correct
                 ra = self.tracers[:, 3]
@@ -312,7 +314,7 @@ class ZobovVoids:
         :return: a healpy map instance with pixels set =1 if they are on the survey boundary, =0 if not
         """
 
-        mask = hp.read_map(self.mask_file, verbose=False)
+        mask = hp.read_map(self.mask_file)
         nside = 512
         mask = hp.ud_grade(mask, nside)
         npix = hp.nside2npix(nside)
@@ -347,7 +349,7 @@ class ZobovVoids:
         buffer_dens = self.mock_dens_ratio * self.tracer_dens
 
         # get the survey mask
-        mask = hp.read_map(self.mask_file, verbose=False)
+        mask = hp.read_map(self.mask_file)
         nside = hp.get_nside(mask)
         survey_pix = np.nonzero(mask)[0]
         numpix = len(survey_pix)
@@ -559,9 +561,10 @@ class ZobovVoids:
 
         # write the buffer information to file for later reference
         mock_file = self.posn_file.replace('pos.dat', 'mocks.npy')
-        if self.verbose:
-            print('Buffer mocks written to file %s' % mock_file)
-        np.save(mock_file, buffers)
+        if not self.cleanup:
+            if self.verbose:
+                print('Buffer mocks written to file %s' % mock_file)
+            np.save(mock_file, buffers)
         self.mock_file = mock_file
         sys.stdout.flush()
 
@@ -737,6 +740,8 @@ class ZobovVoids:
                        str(self.zobov_box_div), self.handle, binpath]
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
+                if self.cleanup:
+                    os.unlink(logfile)
 
                 # ---Step 2: call this script to do the tessellation--- #
                 voz_script = "scr" + self.handle
@@ -745,6 +750,8 @@ class ZobovVoids:
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
+                if self.cleanup:
+                    os.unlink(logfile)
 
                 # ---Step 3: remove the script file--- #
                 if os.access(voz_script, os.F_OK):
@@ -767,6 +774,8 @@ class ZobovVoids:
                        str(self.num_tracers), str(0.9e30)]
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
+                if self.cleanup:
+                    os.unlink(logfile)
 
                 # check the tessellation was successful
                 if not os.access("%s.vol" % self.handle, os.F_OK):
@@ -782,12 +791,16 @@ class ZobovVoids:
                    str(self.zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
+            if self.cleanup:
+                os.unlink(logfile)
 
             # ---Step 2: tie the sub-boxes together using voztie--- #
             log = open(logfile, "a")
             cmd = [binpath + "voztie", str(self.zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
+            if self.cleanup:
+                os.unlink(logfile)
 
             # ---Step 3: check the tessellation was successful--- #
             if not os.access("%s.vol" % self.handle, os.F_OK):
@@ -806,6 +819,8 @@ class ZobovVoids:
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
+                if self.cleanup:
+                    os.unlink(logfile)
 
         print("Tessellation done.")
         sys.stdout.flush()
@@ -845,6 +860,8 @@ class ZobovVoids:
             if self.use_z_wts:
                 redshifts = self.tracers[:self.num_tracers, 5]
                 selfnbins = np.loadtxt(self.selection_fn_file)
+                if self.cleanup:
+                    os.unlink(self.selection_fn_file)
                 selfn = InterpolatedUnivariateSpline(selfnbins[:, 0], selfnbins[:, 2], k=1)
                 # smooth with a Savitzky-Golay filter to remove high-frequency noise
                 x = np.linspace(redshifts.min(), redshifts.max(), 1000)
@@ -892,7 +909,8 @@ class ZobovVoids:
             self.num_non_edge = self.num_tracers - sum(edgemask)
 
         # write a config file
-        self.write_config()
+        if not self.cleanup:
+            self.write_config()
 
         # ---run jozov to perform the void-finding--- #
         cmd = [binpath + "jozovtrvol", "v", self.handle, str(0), str(0)]
@@ -900,6 +918,8 @@ class ZobovVoids:
         log = open(logfile, 'w')
         subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
+        if self.cleanup:
+            os.unlink(logfile)
         # this call to (modified version of) jozov sets NO density threshold, so ALL voids are merged without limit
         # and the FULL merged void heirarchy is output to file; distinct non-overlapping voids are later
         # obtained in post-processing
@@ -912,6 +932,8 @@ class ZobovVoids:
             log = open(logfile, 'a')
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
+            if self.cleanup:
+                os.unlink(logfile)
 
         # ---clean up: remove unnecessary files--- #
         for fileName in glob.glob("./part." + self.handle + ".*"):
@@ -1123,6 +1145,13 @@ class ZobovVoids:
         if self.use_barycentres:
             self.find_void_barycentres(num_acc, edge_flag, use_stripping, strip_density_threshold)
 
+        if self.cleanup:
+            for filename in [new_list_file, new_void_file, zone_file, void_file, list_file, densities_file.replace(".vol", ".adj")]:
+                os.unlink(filename)
+            if not self.find_clusters:
+                for filename in [volumes_file, densities_file, self.posn_file]:
+                    os.unlink(filename)
+
     def find_void_circumcentres(self, num_struct, wtd_avg_dens, edge_flag):
         """Method that checks a list of processed voids, finds the void minimum density centres and writes
         the void catalogue file.
@@ -1269,7 +1298,7 @@ class ZobovVoids:
             centre_dec = 90 - np.degrees((np.arccos(centre_obs[:, 2] / rdist)))
             centre_ra = np.degrees(np.arctan2(centre_obs[:, 1], centre_obs[:, 0]))
             centre_ra[centre_ra < 0] += 360
-            mask = hp.read_map(self.mask_file, verbose=False)
+            mask = hp.read_map(self.mask_file)
             nside = hp.get_nside(mask)
             pixel = hp.ang2pix(nside, np.deg2rad(90 - centre_dec), np.deg2rad(centre_ra))
             centre_redshifts[mask[pixel] == 0] = -1
@@ -1296,13 +1325,18 @@ class ZobovVoids:
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
         if self.is_box:
-            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h)'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f'
+            if not self.outlight:
+                header += ' delta_min delta_avg lambda_v DensRatio'
+                formatting += ' %0.6f %0.6f %0.6f %0.6f'
         else:
-            header += 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_min delta_avg lambda_v ' + \
-                        'DensRatio Theta_eff(deg) EdgeFlag'
-            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f %0.6f %d'
-        np.savetxt(info_file, info_output, fmt=formatting, header=header)
+            header += 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h)'
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f'
+            if not self.outlight:
+                header += ' delta_min delta_avg lambda_v DensRatio Theta_eff(deg) EdgeFlag'
+                formatting += ' %0.6f %0.6f %0.6f %0.6f %0.6f %d'
+        np.savetxt(info_file, info_output[:,:5] if self.outlight else info_output, fmt=formatting, header=header)
 
         return edge_flag
 
@@ -1442,7 +1476,7 @@ class ZobovVoids:
                 centre_dec = 90 - np.degrees((np.arccos(centre_obs[:, 2] / rdist)))
                 centre_ra = np.degrees(np.arctan2(centre_obs[:, 1], centre_obs[:, 0]))
                 centre_ra[centre_ra < 0] += 360
-                mask = hp.read_map(self.mask_file, verbose=False)
+                mask = hp.read_map(self.mask_file)
                 nside = hp.get_nside(mask)
                 pixel = hp.ang2pix(nside, np.deg2rad(90 - centre_dec), np.deg2rad(centre_ra))
                 centre_redshifts[mask[pixel] == 0] = -1
@@ -1467,13 +1501,18 @@ class ZobovVoids:
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
         if self.is_box:
-            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h)'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f'
+            if not self.outlight:
+                header += ' delta_min delta_avg lambda_v DensRatio'
+                formatting += ' %0.6f %0.6f %0.6f %0.6f'
         else:
-            header += 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_min delta_avg lambda_v' + \
-                     'DensRatio Theta_eff(deg) EdgeFlag'
-            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f %0.6f %d'
-        np.savetxt(info_file, info_output, fmt=formatting, header=header)
+            header += 'VoidID RA(deg) Dec(deg) redshift R_eff(Mpc/h)'
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f'
+            if not self.outlight:
+                header += ' delta_min delta_avg lambda_v DensRatio Theta_eff(deg) EdgeFlag'
+                formatting += ' %0.6f %0.6f %0.6f %0.6f %0.6f %d'
+        np.savetxt(info_file, info_output[:,:5] if self.outlight else info_output, fmt=formatting, header=header)
 
     def postprocess_clusters(self):
         """
@@ -1738,10 +1777,19 @@ class ZobovVoids:
         # save output data to file
         header = "%d superclusters from %s\n" % (num_acc, self.handle)
         if self.is_box:
-            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
-            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h)'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f'
+            if not self.outlight:
+                header += ' delta_max delta_avg lambda_c DensRatio'
+                formatting += ' %0.6f %0.6f %0.6f %0.6f'
         else:
-            header += 'ClusterID RA(deg) Dec(deg) redshift R_eff(Mpc/h) delta_max delta_avg lambda_c ' + \
-                     'DensRatio Theta_eff(deg) EdgeFlag'
-            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f %0.6f %d'
-            np.savetxt(info_file, info_output, fmt=formatting, header=header)
+            header += 'ClusterID RA(deg) Dec(deg) redshift R_eff(Mpc/h)'
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f'
+            if not self.outlight:
+                header += ' delta_max delta_avg lambda_c DensRatio Theta_eff(deg) EdgeFlag'
+                formatting += ' %0.6f %0.6f %0.6f %0.6f %0.6f %d'
+        np.savetxt(info_file, info_output[:,:5] if self.outlight else info_output, fmt=formatting, header=header)
+
+        if not self.find_clusters:
+            for filename in [new_list_file, new_clust_file, zone_file, clust_file, list_file, vol_file, dens_file, self.posn_file]:
+                os.unlink(filename)

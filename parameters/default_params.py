@@ -6,6 +6,8 @@
 verbose = False  # True for more informative output statements
 debug = False    # True for output checks during reconstruction
 nthreads = 4     # set to the number of CPUs available, more is better
+outlight = False     # True to limit the number of columns in output catalogues
+cleanup = False      # True to keep only void catalogue output
 # ================================ #
 
 # ========= file handling options ========= #

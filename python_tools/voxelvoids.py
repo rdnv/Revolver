@@ -31,6 +31,8 @@ class VoxelVoids:
         self.z_min = parms.z_min
         self.z_max = parms.z_max
         self.verbose = parms.verbose
+        self.outlight = parms.outlight
+        self.cleanup = parms.cleanup
 
         print("%d tracers found" % cat.size)
 
@@ -216,6 +218,9 @@ class VoxelVoids:
                raw_dir + self.handle, str(self.nbins)]
         subprocess.call(cmd)
 
+        if self.cleanup:
+            os.unlink(raw_dir + self.handle + "_density_n%d.dat" % self.nbins)
+
         # postprocess void data
         self.postprocess_voids()
 
@@ -228,6 +233,10 @@ class VoxelVoids:
             subprocess.call(cmd)
             self.postprocess_clusters()
 
+        if self.cleanup:
+            os.unlink(raw_dir + self.handle + ".void")
+            os.unlink(raw_dir + self.handle + ".zone")
+
         print(" ==== Finished with voxel-based method ==== ")
         sys.stdout.flush()
 
@@ -237,6 +246,8 @@ class VoxelVoids:
 
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + ".txt", skiprows=2)
+        if self.cleanup:
+            os.unlink(raw_dir + self.handle + ".txt")
         nvox = self.nbins ** 3
         # masked_vox = np.arange(nvox)[self.mask_cut]
 
@@ -346,17 +357,20 @@ class VoxelVoids:
         catalogue_file = self.output_folder + self.void_prefix + '_cat.txt'
         header = '%d voxels, %d voids\n' % (nvox, len(output))
         if self.is_box:
-            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h)'
+            formatting = '%d %0.3f %0.3f %0.6f %0.3f'
         else:
-            header += 'VoidID RA Dec z R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
-            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
-        np.savetxt(catalogue_file, output, fmt=formatting, header=header)
+            header += 'VoidID RA Dec z R_eff(Mpc/h)'
+            formatting = '%d %0.6f %0.6f %0.6f %0.3f'
+        if not self.outlight:
+            header += ' delta_min delta_avg lambda_v DensRatio'
+            formatting += ' %0.6f %0.6f %0.6f %0.6f'
+        np.savetxt(catalogue_file, output[:,:5] if self.outlight else output, fmt=formatting, header=header)
 
         if self.use_barycentres:
             catalogue_file = self.output_folder + 'barycentres_' + self.void_prefix + '_cat.txt'
             output[:, 1:4] = barycentres
-            np.savetxt(catalogue_file, output, fmt=formatting, header=header)
+            np.savetxt(catalogue_file, output[:,:5] if self.outlight else output, fmt=formatting, header=header)
 
     def postprocess_clusters(self):
 
@@ -364,6 +378,8 @@ class VoxelVoids:
 
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + "c.txt", skiprows=2)
+        if self.cleanup:
+            os.unlink(raw_dir + self.handle + "c.txt")
 
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
@@ -438,12 +454,15 @@ class VoxelVoids:
         catalogue_file = self.output_folder + self.cluster_prefix + '_cat.txt'
         header = '%d voxels, %d clusters\n' % (nvox, len(output))
         if self.is_box:
-            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
-            formatting = '%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
+            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h)'
+            formatting = '%d %0.6f %0.6f %0.6f'
         else:
-            header += 'ClusterID RA Dec z R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
-            formatting = '%d %0.3f %0.3f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f'
-        np.savetxt(catalogue_file, output, fmt=formatting, header=header)
+            header += 'ClusterID RA Dec z R_eff(Mpc/h)'
+            formatting = '%d %0.3f %0.3f %0.6f'
+        if not self.outlight:
+            header += ' delta_max delta_avg lambda_c DensRatio'
+            formatting += ' %0.3f %0.6f %0.6f %0.6f %0.6f'
+        np.savetxt(catalogue_file, output[:,:5] if self.outlight else output, fmt=formatting, header=header)
 
     def voxel_position(self, voxel):
 
