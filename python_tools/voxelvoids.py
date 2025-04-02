@@ -37,13 +37,13 @@ class VoxelVoids:
         print("%d tracers found" % cat.size)
 
         if self.is_box:
-            self.box_length = parms.box_length
+            self.box_length = parms.box_length + 0.001 # extra padding needed to avoid numerical issues
             self.cat = cat
 
             # determine an appropriate bin size
-            mean_dens = cat.size / parms.box_length ** 3.
-            self.nbins = int(np.floor(parms.box_length / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
-            self.binsize = parms.box_length / self.nbins
+            mean_dens = cat.size / self.box_length ** 3.
+            self.nbins = int(np.floor(self.box_length / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
+            self.binsize = self.box_length / self.nbins
             print('Bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
 
             # choose an appropriate smoothing scale
